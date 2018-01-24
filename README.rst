@@ -32,7 +32,7 @@ Prerequisites:
 License
 =======
 
-  | Copyright (c) 2012-2017 Adam Karpierz
+  | Copyright (c) 2012-2018 Adam Karpierz
   |
   | Licensed under the zlib/libpng License
   | http://opensource.org/licenses/zlib

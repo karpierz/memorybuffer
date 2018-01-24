@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.2a1 (2018-01-24)
+--------------------
+  - Update required Sphinx version.
+  - Update doc Sphinx configuration files.
+
 0.2.1a2 (2017-11-21)
 --------------------
   - Fix syntax error.
