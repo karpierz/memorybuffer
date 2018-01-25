@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.2.2a2 (2018-01-25)
+--------------------
+  - Fix a bug and inconsistencies in tox.ini
+
 0.2.2a1 (2018-01-24)
 --------------------
   - Update required Sphinx version.
