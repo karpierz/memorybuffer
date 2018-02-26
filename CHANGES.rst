@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.2.2a5 (2018-02-26)
+--------------------
+  - Improve and simplify setup and packaging.
+
 0.2.2a4 (2018-01-28)
 --------------------
   - Fix a bug and inconsistencies in tox.ini
