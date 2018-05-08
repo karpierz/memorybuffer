@@ -176,5 +176,3 @@ except AttributeError:
         return ((py_version >= (3,0) or
                  (TypeObj.tp_flags & PyTypeObject.Py_TPFLAGS_HAVE_NEWBUFFER)) and
                 bool(tp_as_buffer) and bool(tp_as_buffer.contents.bf_getbuffer))
-
-# eof

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.3a2 (2018-05-08)
+--------------------
+  - Update required setuptools version.
+  - Improve and simplify setup and packaging.
+
 0.2.2a5 (2018-02-26)
 --------------------
   - Improve and simplify setup and packaging.

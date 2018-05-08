@@ -201,5 +201,3 @@ class PyTypeObject(Structure):
         ("tp_next",           c_void_p)]) # struct PyTypeObject*
     _fields_ = tuple(_fields_)
     del _U
-
-# eof
