@@ -1,8 +1,9 @@
 Changelog
 =========
 
-0.2.3a3 (2018-05-22)
+0.2.3a3 (2018-11-08)
 --------------------
+  - Drop support for Python 2.6 and 3.0-3.3
   - Update required setuptools version.
 
 0.2.3a2 (2018-05-08)

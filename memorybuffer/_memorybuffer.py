@@ -9,9 +9,9 @@ __all__ = ('Py_buffer','Buffer','isbuffer')
 import sys
 import ctypes
 py_version = sys.version_info[:2]
-if py_version < (2,6):
+if py_version < (2,7):
     # Only if the new buffer protocol is available
-    raise ImportError("Buffer interface only usable on Python 2.6+")
+    raise ImportError("Buffer interface only usable on Python 2.7+")
 from ctypes import (c_bool, c_int, c_ulong, c_void_p, c_char_p, py_object,
                     POINTER, pointer, byref, sizeof, cast, memset, Structure)
 from ctypes import pythonapi
@@ -27,7 +27,7 @@ class Py_buffer(Structure):
 
     """Python level Py_buffer struct analog"""
 
-    # equivalent of: Python-(2.6.0 | 2.7.0 | 3.4.3 | 3.5.1)/Include/object.h/Py_buffer
+    # equivalent of: Python-(2.7.0 | 3.4.3 | 3.5.1)/Include/object.h/Py_buffer
 
     # Maximum number of dimensions
     PyBUF_MAX_NDIM = 64
@@ -170,7 +170,7 @@ try:
 except AttributeError:
     CFUNC(c_bool, py_object)
     def isbuffer(obj):
-        # 2.6.6, 2.7.10, 3.4.3, 3.5.1
+        # 2.7.10, 3.4.3, 3.5.1
         TypeObj = PyTypeObject.from_address(id(type(obj)))
         tp_as_buffer = cast(TypeObj.tp_as_buffer, POINTER(_PyBufferProcs))
         return ((py_version >= (3,0) or

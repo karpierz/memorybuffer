@@ -15,7 +15,7 @@ Installation
 
 Prerequisites:
 
-+ Python 2.6 or higher
++ Python 2.7 or higher
 
   * http://www.python.org/
   * 2.7 and 3.4 are primary test environments.
@@ -62,6 +62,6 @@ License
 Authors
 =======
 
-* Adam Karpierz <python@python.pl>
+* Adam Karpierz <adam@karpierz.net>
 
 .. _`Python Buffer Protocol`: https://docs.python.org/3/c-api/buffer.html
