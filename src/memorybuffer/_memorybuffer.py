@@ -1,22 +1,14 @@
-# Copyright (c) 2012-2018 Adam Karpierz
+# Copyright (c) 2012-2019 Adam Karpierz
 # Licensed under the zlib/libpng License
-# http://opensource.org/licenses/zlib
-
-from __future__ import absolute_import
+# https://opensource.org/licenses/zlib/
 
 __all__ = ('Py_buffer','Buffer','isbuffer')
 
-import sys
-import ctypes
-py_version = sys.version_info[:2]
-if py_version < (2,7):
-    # Only if the new buffer protocol is available
-    raise ImportError("Buffer interface only usable on Python 2.7+")
-from ctypes import (c_bool, c_int, c_ulong, c_void_p, c_char_p, py_object,
-                    POINTER, pointer, byref, sizeof, cast, memset, Structure)
-from ctypes import pythonapi
-c_ssize_t = getattr(ctypes, "c_ssize_t", c_ulong)  # Python 2.6 doesn't define this
+from ctypes import (c_bool, c_int, c_ulong, c_ssize_t, c_void_p, c_char_p,
+                    py_object, POINTER, pointer, byref, sizeof, cast, memset,
+                    Structure)
 from ctypes import CFUNCTYPE as CFUNC
+from ctypes import pythonapi
 from ._typeobject import PyTypeObject
 
 #----------------------------------------------------------------------------#
@@ -27,7 +19,7 @@ class Py_buffer(Structure):
 
     """Python level Py_buffer struct analog"""
 
-    # equivalent of: Python-(2.7.0 | 3.4.3 | 3.5.1)/Include/object.h/Py_buffer
+    # equivalent of: Python-(3.5.1)/Include/object.h/Py_buffer
 
     # Maximum number of dimensions
     PyBUF_MAX_NDIM = 64
@@ -73,15 +65,11 @@ class Py_buffer(Structure):
         ("shape",      POINTER(c_ssize_t)),
         ("strides",    POINTER(c_ssize_t)),
         ("suboffsets", POINTER(c_ssize_t))]
-    if py_version >= (2,7) and py_version <= (3,2):
-        _fields_.extend([
-        ("smalltable", c_ssize_t * 2)])
     _fields_.extend([
         ("internal",   c_void_p)])
     _fields_ = tuple(_fields_)
 
     def __new__(cls, *args, **kargs):
-
         self = super(Py_buffer, cls).__new__(cls)
         memset(byref(self), 0, sizeof(Py_buffer))
         return self
@@ -90,7 +78,7 @@ class Py_buffer(Structure):
 #                               Buffer Mixin                                 #
 #----------------------------------------------------------------------------#
 
-class Buffer(object):
+class Buffer:
 
     """Python level buffer protocol exporter"""
 
@@ -98,22 +86,15 @@ class Buffer(object):
 
 class _PyBufferProcs(Structure):
 
-    # equivalent of: Python-(3.4.3 | 2.7.10)/Include/object.h/PyBufferProcs
+    # equivalent of: Python-(3.5.1)/Include/object.h/PyBufferProcs
 
     getbufferproc     = CFUNC(c_int, py_object, POINTER(Py_buffer), c_int)
     releasebufferproc = CFUNC(None,  py_object, POINTER(Py_buffer))
 
     __slots__ = ()
-    _fields_  = []
-    if py_version < (3,0):
-        _fields_.extend([
-        ("bf_getreadbuffer",  c_void_p),
-        ("bf_getwritebuffer", c_void_p),
-        ("bf_getsegcount",    c_void_p),
-        ("bf_getcharbuffer",  c_void_p)])
-    _fields_.extend([
+    _fields_  = [
         ("bf_getbuffer",     getbufferproc),
-        ("bf_releasebuffer", releasebufferproc)])
+        ("bf_releasebuffer", releasebufferproc)]
     _fields_ = tuple(_fields_)
 
 @_PyBufferProcs.getbufferproc
@@ -170,9 +151,7 @@ try:
 except AttributeError:
     CFUNC(c_bool, py_object)
     def isbuffer(obj):
-        # 2.7.10, 3.4.3, 3.5.1
+        # 3.5.1
         TypeObj = PyTypeObject.from_address(id(type(obj)))
         tp_as_buffer = cast(TypeObj.tp_as_buffer, POINTER(_PyBufferProcs))
-        return ((py_version >= (3,0) or
-                 (TypeObj.tp_flags & PyTypeObject.Py_TPFLAGS_HAVE_NEWBUFFER)) and
-                bool(tp_as_buffer) and bool(tp_as_buffer.contents.bf_getbuffer))
+        return bool(tp_as_buffer) and bool(tp_as_buffer.contents.bf_getbuffer)

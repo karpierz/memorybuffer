@@ -1,19 +1,15 @@
-# Copyright (c) 2012-2018 Adam Karpierz
+# Copyright (c) 2012-2019 Adam Karpierz
 # Licensed under the zlib/libpng License
-# http://opensource.org/licenses/zlib
-
-from __future__ import absolute_import
+# https://opensource.org/licenses/zlib/
 
 __all__ = ('PyTypeObject',)
 
-import sys
-PY2 = sys.version_info[0] <= 2
 from ctypes import (c_uint, c_ulong, c_ssize_t, c_char_p, c_void_p, py_object,
                     POINTER, Structure, Union)
 
 class PyTypeObject(Structure):
 
-    # PyTypeObject equivalent of: Python-(3.4.3 | 2.7.10)\Include\object.h\PyTypeObject
+    # PyTypeObject equivalent of: Python-(3.5.1)\Include\object.h\PyTypeObject
 
     # `Type flags (tp_flags)
     #
@@ -44,28 +40,28 @@ class PyTypeObject(Structure):
     # In 3.0 they will have to manually remove this flag though!
 
     # PyBufferProcs contains bf_getcharbuffer
-    Py_TPFLAGS_HAVE_GETCHARBUFFER = (0x1 <<  0) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_GETCHARBUFFER = 0x0
     # PySequenceMethods contains sq_contains
-    Py_TPFLAGS_HAVE_SEQUENCE_IN   = (0x1 <<  1) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_SEQUENCE_IN   = 0x0
     # This is here for backwards compatibility.  Extensions that use the old GC
     # API will still compile but the objects will not be tracked by the GC.
-    Py_TPFLAGS_GC = 0x0 #used to be (0x1 <<  2) if PY2 else 0x0
+    Py_TPFLAGS_GC = 0x0 #used to be 0x0
     # PySequenceMethods and PyNumberMethods contain in-place operators
-    Py_TPFLAGS_HAVE_INPLACEOPS    = (0x1 <<  3) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_INPLACEOPS    = 0x0
     # PyNumberMethods do their own coercion
-    Py_TPFLAGS_CHECKTYPES         = (0x1 <<  4) if PY2 else 0x0
+    Py_TPFLAGS_CHECKTYPES         = 0x0
     # tp_richcompare is defined
-    Py_TPFLAGS_HAVE_RICHCOMPARE   = (0x1 <<  5) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_RICHCOMPARE   = 0x0
     # Objects which are weakly referencable if their tp_weaklistoffset is >0
-    Py_TPFLAGS_HAVE_WEAKREFS      = (0x1 <<  6) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_WEAKREFS      = 0x0
     # tp_iter is defined
-    Py_TPFLAGS_HAVE_ITER          = (0x1 <<  7) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_ITER          = 0x0
     # New members introduced by Python 2.2 exist
-    Py_TPFLAGS_HAVE_CLASS         = (0x1 <<  8) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_CLASS         = 0x0
     # Objects support nb_index in PyNumberMethods
-    Py_TPFLAGS_HAVE_INDEX         = (0x1 << 17) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_INDEX         = 0x0
     # Has the new buffer protocol
-    Py_TPFLAGS_HAVE_NEWBUFFER     = (0x1 << 21) if PY2 else 0x0
+    Py_TPFLAGS_HAVE_NEWBUFFER     = 0x0
 
     # Set if the type object is dynamically allocated
     Py_TPFLAGS_HEAPTYPE = (0x1 << 9)
@@ -89,7 +85,7 @@ class PyTypeObject(Structure):
 
     # These flags are used to determine if a type is a subclass.
     Py_TPFLAGS_LONG_SUBCLASS     = (0x1 << 24)
-    Py_TPFLAGS_INT_SUBCLASS      = (0x1 << 23) if PY2 else Py_TPFLAGS_LONG_SUBCLASS
+    Py_TPFLAGS_INT_SUBCLASS      = Py_TPFLAGS_LONG_SUBCLASS
     Py_TPFLAGS_LIST_SUBCLASS     = (0x1 << 25)
     Py_TPFLAGS_TUPLE_SUBCLASS    = (0x1 << 26)
     Py_TPFLAGS_BYTES_SUBCLASS    = (0x1 << 27)
@@ -107,14 +103,13 @@ class PyTypeObject(Structure):
                           Py_TPFLAGS_HAVE_ITER |
                           Py_TPFLAGS_HAVE_CLASS |
                           Py_TPFLAGS_HAVE_INDEX |
-                          Py_TPFLAGS_HAVE_STACKLESS_EXTENSION)
-    if not PY2:
-        Py_TPFLAGS_DEFAULT |= Py_TPFLAGS_HAVE_VERSION_TAG
+                          Py_TPFLAGS_HAVE_STACKLESS_EXTENSION |
+                          Py_TPFLAGS_HAVE_VERSION_TAG)
 
     # NOTE: The following flags reuse lower bits (removed as part of the Python 3.0 transition).
 
-    # Type structure has tp_finalize member (3.4)
-    Py_TPFLAGS_HAVE_FINALIZE = 0x0 if PY2 else (0x1 << 0)
+    # Type structure has tp_finalize member
+    Py_TPFLAGS_HAVE_FINALIZE = (0x1 << 0)
 
     __slots__ = ()
 
@@ -151,7 +146,7 @@ class PyTypeObject(Structure):
         # Functions to access object as input/output buffer
         ("tp_as_buffer",      c_void_p),  # PyBufferProcs*
         # Flags to define presence of optional/expanded features
-        ("tp_flags",          c_ulong),   # (in PY2 was c_long)
+        ("tp_flags",          c_ulong),
         ("tp_doc",            c_char_p),  # Documentation string
         # Assigned meaning in release 2.0
         # call function for all accessible objects
@@ -187,10 +182,8 @@ class PyTypeObject(Structure):
         ("tp_weaklist",       py_object),
         ("tp_del",            c_void_p),  # destructor
         # Type attribute cache version tag.
-        ("tp_version_tag",    c_uint)]
-    if not PY2:
-        _fields_.extend([
-        ("tp_finalize",       c_void_p)]) # destructor
+        ("tp_version_tag",    c_uint),
+        ("tp_finalize",       c_void_p)]  # destructor
     if False: #ifdef COUNT_ALLOCS
         _fields_.extend([
         # these must be last and never explicitly initialized

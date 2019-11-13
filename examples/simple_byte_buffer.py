@@ -1,15 +1,9 @@
-# Copyright (c) 2012-2018 Adam Karpierz
+# Copyright (c) 2012-2019 Adam Karpierz
 # Licensed under the zlib/libpng License
-# http://opensource.org/licenses/zlib
+# https://opensource.org/licenses/zlib/
 
-from __future__ import absolute_import, print_function
-
-import sys
 import ctypes as ct
 from memorybuffer import Py_buffer, Buffer, isbuffer
-
-chb = chr if sys.version_info[0] >= 3 else lambda x: x
-orb = ord if sys.version_info[0] >= 3 else lambda x: x
 
 
 class ByteBuffer(Buffer):
@@ -41,7 +35,8 @@ class ByteBuffer(Buffer):
 
     def __releasebuffer__(self, buffer):
 
-        self.__buffer_exports__ -= 1
+        if self.__buffer_exports__ > 0:
+            self.__buffer_exports__ -= 1
 
         if self.__buffer_exports__ != 0 or not buffer.buf:
             return
@@ -58,17 +53,17 @@ def main():
     print()
 
     mem = memoryview(buf)
-    print(chb(mem[0]), chb(mem[1]), chb(mem[2]))
+    print(chr(mem[0]), chr(mem[1]), chr(mem[2]))
     for b in mem:
-        print(chb(b), end=" ")
+        print(chr(b), end=" ")
     print()
     print()
 
-    mem[0] = orb("X")
-    mem[5] = orb("Z")
-    print(chb(mem[0]), chb(mem[1]), chb(mem[2]))
+    mem[0] = ord("X")
+    mem[5] = ord("Z")
+    print(chr(mem[0]), chr(mem[1]), chr(mem[2]))
     for b in mem:
-        print(chb(b), end=" ")
+        print(chr(b), end=" ")
     print()
 
 
