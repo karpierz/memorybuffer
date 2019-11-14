@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.2.3a4 (2019-11-13)
+0.3.0b1 (2019-11-13)
 --------------------
 - Drop support for Python 2.
 - Drop support for Python 3.4.
