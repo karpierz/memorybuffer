@@ -1,6 +1,6 @@
-# Copyright (c) 2012-2019 Adam Karpierz
+# Copyright (c) 2012-2020 Adam Karpierz
 # Licensed under the zlib/libpng License
-# https://opensource.org/licenses/zlib/
+# https://opensource.org/licenses/Zlib
 
 __all__ = ('Py_buffer','Buffer','isbuffer')
 
@@ -16,7 +16,6 @@ from ._typeobject import PyTypeObject
 #----------------------------------------------------------------------------#
 
 class Py_buffer(Structure):
-
     """Python level Py_buffer struct analog"""
 
     # equivalent of: Python-(3.5.1)/Include/object.h/Py_buffer
@@ -64,9 +63,8 @@ class Py_buffer(Structure):
         ("format",     c_char_p),
         ("shape",      POINTER(c_ssize_t)),
         ("strides",    POINTER(c_ssize_t)),
-        ("suboffsets", POINTER(c_ssize_t))]
-    _fields_.extend([
-        ("internal",   c_void_p)])
+        ("suboffsets", POINTER(c_ssize_t)),
+        ("internal",   c_void_p)]
     _fields_ = tuple(_fields_)
 
     def __new__(cls, *args, **kargs):
