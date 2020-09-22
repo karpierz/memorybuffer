@@ -10,7 +10,7 @@ __title__        = "memorybuffer"
 __summary__      = "Python buffer protocol."
 __uri__          = "https://pypi.org/project/memorybuffer/"
 __version_info__ = type("version_info", (), dict(major=0, minor=4, micro=0,
-                        releaselevel="beta", serial=2))
+                        releaselevel="beta", serial=3))
 __version__      = "{0.major}.{0.minor}.{0.micro}{1}{2}".format(__version_info__,
                    dict(alpha="a", beta="b", candidate="rc", final="",
                         post=".post", dev=".dev")[__version_info__.releaselevel],

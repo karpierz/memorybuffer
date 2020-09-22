@@ -7,9 +7,11 @@ __all__ = ('PyTypeObject',)
 from ctypes import (c_uint, c_ulong, c_ssize_t, c_char_p, c_void_p, py_object,
                     POINTER, Structure, Union)
 
-class PyTypeObject(Structure):
 
-    # PyTypeObject equivalent of: Python-(3.5.1)\Include\object.h\PyTypeObject
+class PyTypeObject(Structure):
+    """Python level PyTypeObject struct analog."""
+
+    # equivalent of: Python-(3.X.X)/Include/object.h/PyTypeObject
 
     # `Type flags (tp_flags)
     #

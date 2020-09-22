@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.0b3 (2020-09-22)
+--------------------
+- Setup: fix an improper dependencies versions.
+
 0.4.0b2 (2020-09-20)
 --------------------
 - Add support for Python 3.9.

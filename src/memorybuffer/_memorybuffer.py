@@ -16,9 +16,9 @@ from ._typeobject import PyTypeObject
 #----------------------------------------------------------------------------#
 
 class Py_buffer(Structure):
-    """Python level Py_buffer struct analog"""
+    """Python level Py_buffer struct analog."""
 
-    # equivalent of: Python-(3.5.1)/Include/object.h/Py_buffer
+    # equivalent of: Python-(3.X.X)/Include/object.h/Py_buffer
 
     # Maximum number of dimensions
     PyBUF_MAX_NDIM = 64
@@ -77,14 +77,13 @@ class Py_buffer(Structure):
 #----------------------------------------------------------------------------#
 
 class Buffer:
-
-    """Python level buffer protocol exporter"""
+    """Python level buffer protocol exporter."""
 
     __slots__ = ()
 
 class _PyBufferProcs(Structure):
 
-    # equivalent of: Python-(3.5.1)/Include/object.h/PyBufferProcs
+    # equivalent of: Python-(3.X.X)/Include/object.h/PyBufferProcs
 
     getbufferproc     = CFUNC(c_int, py_object, POINTER(Py_buffer), c_int)
     releasebufferproc = CFUNC(None,  py_object, POINTER(Py_buffer))
@@ -101,7 +100,7 @@ def _bf_getbuffer(self, view_p, flags):
     try:
         getbuffer = self.__getbuffer__
     except AttributeError:
-        raise NotImplementedError("abstract method")
+        raise NotImplementedError("abstract method") from None
 
     try:
         rval = getbuffer(view_p[0] if view_p else None, flags)
