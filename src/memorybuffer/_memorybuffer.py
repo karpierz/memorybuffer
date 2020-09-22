@@ -148,7 +148,7 @@ try:
 except AttributeError:
     CFUNC(c_bool, py_object)
     def isbuffer(obj):
-        # 3.5.1
+        # from 3.5.1
         TypeObj = PyTypeObject.from_address(id(type(obj)))
         tp_as_buffer = cast(TypeObj.tp_as_buffer, POINTER(_PyBufferProcs))
         return bool(tp_as_buffer) and bool(tp_as_buffer.contents.bf_getbuffer)
