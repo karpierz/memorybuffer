@@ -11,7 +11,7 @@ from ctypes import (c_uint, c_ulong, c_ssize_t, c_char_p, c_void_p, py_object,
 class PyTypeObject(Structure):
     """Python level PyTypeObject struct analog."""
 
-    # equivalent of: Python-(3.X.X)/Include/object.h/PyTypeObject
+    # equivalent of: Python-(3.6.0+)/Include/object.h/PyTypeObject
 
     # `Type flags (tp_flags)
     #
@@ -25,56 +25,30 @@ class PyTypeObject(Structure):
     # all extension writers who publically release their extensions (this will
     # be fewer than you might expect!)..
     #
-    # Most flags were removed as of Python 3.0 to make room for new flags.
-    # (Some flags are not for backwards compatibility but to indicate the presence
-    #  of an optional feature; these flags remain of course.)
+    # Most flags were removed as of Python 3.0 to make room for new flags. (Some
+    # flags are not for backwards compatibility but to indicate the presence of an
+    # optional feature; these flags remain of course.)
     #
     # Type definitions should use Py_TPFLAGS_DEFAULT for their tp_flags value.
     #
     # Code can use PyType_HasFeature(type_ob, flag_value) to test whether the
     # given type object has a specified feature.
-    #
-    # NOTE for Py2:
-    # when building the core, Py_TPFLAGS_DEFAULT includes Py_TPFLAGS_HAVE_VERSION_TAG;
-    # outside the core, it doesn't.
-    # This is so that extensions that modify tp_dict of their own types directly don't break,
-    # since this was allowed in 2.5.
-    # In 3.0 they will have to manually remove this flag though!
-
-    # PyBufferProcs contains bf_getcharbuffer
-    Py_TPFLAGS_HAVE_GETCHARBUFFER = 0x0
-    # PySequenceMethods contains sq_contains
-    Py_TPFLAGS_HAVE_SEQUENCE_IN   = 0x0
-    # This is here for backwards compatibility.  Extensions that use the old GC
-    # API will still compile but the objects will not be tracked by the GC.
-    Py_TPFLAGS_GC = 0x0 #used to be 0x0
-    # PySequenceMethods and PyNumberMethods contain in-place operators
-    Py_TPFLAGS_HAVE_INPLACEOPS    = 0x0
-    # PyNumberMethods do their own coercion
-    Py_TPFLAGS_CHECKTYPES         = 0x0
-    # tp_richcompare is defined
-    Py_TPFLAGS_HAVE_RICHCOMPARE   = 0x0
-    # Objects which are weakly referencable if their tp_weaklistoffset is >0
-    Py_TPFLAGS_HAVE_WEAKREFS      = 0x0
-    # tp_iter is defined
-    Py_TPFLAGS_HAVE_ITER          = 0x0
-    # New members introduced by Python 2.2 exist
-    Py_TPFLAGS_HAVE_CLASS         = 0x0
-    # Objects support nb_index in PyNumberMethods
-    Py_TPFLAGS_HAVE_INDEX         = 0x0
-    # Has the new buffer protocol
-    Py_TPFLAGS_HAVE_NEWBUFFER     = 0x0
 
     # Set if the type object is dynamically allocated
     Py_TPFLAGS_HEAPTYPE = (0x1 << 9)
+
     # Set if the type allows subclassing
     Py_TPFLAGS_BASETYPE = (0x1 << 10)
+
     # Set if the type is 'ready' -- fully initialized
-    Py_TPFLAGS_READY    = (0x1 << 12)
+    Py_TPFLAGS_READY = (0x1 << 12)
+
     # Set while the type is being 'readied', to prevent recursive ready calls
     Py_TPFLAGS_READYING = (0x1 << 13)
+
     # Objects support garbage collection (see objimp.h)
-    Py_TPFLAGS_HAVE_GC  = (0x1 << 14)
+    Py_TPFLAGS_HAVE_GC = (0x1 << 14)
+
     # These two bits are preserved for Stackless Python, next after this is 17
     Py_TPFLAGS_HAVE_STACKLESS_EXTENSION = 0x0 #ifndef STACKLESS else (0x3 << 15)
 
@@ -83,43 +57,29 @@ class PyTypeObject(Structure):
     Py_TPFLAGS_VALID_VERSION_TAG = (0x1 << 19)
 
     # Type is abstract and cannot be instantiated
-    Py_TPFLAGS_IS_ABSTRACT       = (0x1 << 20)
+    Py_TPFLAGS_IS_ABSTRACT = (0x1 << 20)
 
     # These flags are used to determine if a type is a subclass.
     Py_TPFLAGS_LONG_SUBCLASS     = (0x1 << 24)
-    Py_TPFLAGS_INT_SUBCLASS      = Py_TPFLAGS_LONG_SUBCLASS
     Py_TPFLAGS_LIST_SUBCLASS     = (0x1 << 25)
     Py_TPFLAGS_TUPLE_SUBCLASS    = (0x1 << 26)
     Py_TPFLAGS_BYTES_SUBCLASS    = (0x1 << 27)
-    Py_TPFLAGS_STRING_SUBCLASS   = Py_TPFLAGS_BYTES_SUBCLASS  # compatibility with Py2
     Py_TPFLAGS_UNICODE_SUBCLASS  = (0x1 << 28)
     Py_TPFLAGS_DICT_SUBCLASS     = (0x1 << 29)
     Py_TPFLAGS_BASE_EXC_SUBCLASS = (0x1 << 30)
     Py_TPFLAGS_TYPE_SUBCLASS     = (0x1 << 31)
 
-    Py_TPFLAGS_DEFAULT = (Py_TPFLAGS_HAVE_GETCHARBUFFER |
-                          Py_TPFLAGS_HAVE_SEQUENCE_IN |
-                          Py_TPFLAGS_HAVE_INPLACEOPS |
-                          Py_TPFLAGS_HAVE_RICHCOMPARE |
-                          Py_TPFLAGS_HAVE_WEAKREFS |
-                          Py_TPFLAGS_HAVE_ITER |
-                          Py_TPFLAGS_HAVE_CLASS |
-                          Py_TPFLAGS_HAVE_INDEX |
-                          Py_TPFLAGS_HAVE_STACKLESS_EXTENSION |
-                          Py_TPFLAGS_HAVE_VERSION_TAG)
+    Py_TPFLAGS_DEFAULT = (Py_TPFLAGS_HAVE_STACKLESS_EXTENSION |
+                          Py_TPFLAGS_HAVE_VERSION_TAG |
+                          0x0)
 
-    # NOTE: The following flags reuse lower bits (removed as part of the Python 3.0 transition).
+    # NOTE: The following flags reuse lower bits (removed as part of the
+    # Python 3.0 transition).
 
-    # Type structure has tp_finalize member
+    # Type structure has tp_finalize member (3.4)
     Py_TPFLAGS_HAVE_FINALIZE = (0x1 << 0)
 
     __slots__ = ()
-
-    class _U(Union):
-        _fields_ = (
-            ("tp_compare",    c_void_p), # compatibility with Py2
-            ("tp_reserved",   c_void_p)) # compatibility with Py3
-    _anonymous_ = ("u",)
     _fields_ = [# PyObject_VAR_HEAD
         ("ob_refcnt",         c_ssize_t),
         ("ob_type",           c_void_p),
@@ -133,7 +93,7 @@ class PyTypeObject(Structure):
         ("tp_print",          c_void_p),  # printfunc
         ("tp_getattr",        c_void_p),  # getattrfunc
         ("tp_setattr",        c_void_p),  # setattrfunc
-        ("u",                 _U),        # void* if PY3 else cmpfunc
+        ("tp_reserved",       c_void_p),  # void*
         ("tp_repr",           c_void_p),  # reprfunc
         # Method suites for standard classes
         ("tp_as_number",      c_void_p),  # PyNumberMethods*
@@ -195,4 +155,3 @@ class PyTypeObject(Structure):
         ("tp_prev",           c_void_p),  # struct PyTypeObject*
         ("tp_next",           c_void_p)]) # struct PyTypeObject*
     _fields_ = tuple(_fields_)
-    del _U

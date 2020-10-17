@@ -2,30 +2,47 @@
 # Licensed under the zlib/libpng License
 # https://opensource.org/licenses/Zlib
 
+import array
 import ctypes as ct
 from memorybuffer import Buffer, isbuffer, Py_buffer
 
 
-class ByteVector(Buffer):
+class Matrix(Buffer):
 
     def __init__(self):
-        self.vector = bytearray(b"ABCDEFGHIJ")
+        self.ncols:  int   = 5
+        self.vector: array = array.array("f", (0.0, 0.1, 0.2, 0.3, 0.4,
+                                               1.0, 1.1, 1.2, 1.3, 1.4,
+                                               2.0, 2.1, 2.2, 2.3, 2.4))
 
     # Buffer protocol
 
     def __getbuffer__(self, buffer: Py_buffer, flags: int):
         length   = len(self.vector)
-        itemsize = 1
+        itemsize = self.vector.itemsize
         buffsize = length * itemsize
+
+        shape   = (ct.c_ssize_t * 2)()
+        strides = (ct.c_ssize_t * 2)()
+
+        shape[0] = length // self.ncols
+        shape[1] = self.ncols
+
+        # Stride 0 is the distance, in bytes, between the first elements
+        # of adjacent rows.
+        # Stride 1 is the distance, in bytes, between two items in a row;
+        # this is the distance between two adjacent items in the vector.
+        strides[0] = self.ncols * itemsize
+        strides[1] = itemsize
 
         buffer.buf        = self.__from_buffer__(self.vector, buffsize)
         buffer.len        = buffsize
         buffer.itemsize   = itemsize
         buffer.readonly   = False
-        buffer.ndim       = 1
-        buffer.format     = b"b"  # byte
-        buffer.shape      = (ct.c_ssize_t * 1)(length)
-        buffer.strides    = (ct.c_ssize_t * 1)(itemsize)
+        buffer.ndim       = 2
+        buffer.format     = b"f"  # float
+        buffer.shape      = shape
+        buffer.strides    = strides
         buffer.suboffsets = None
         buffer.internal   = None
 
@@ -49,7 +66,7 @@ class ByteVector(Buffer):
 
 def main():
 
-    buf = ByteVector()
+    buf = Matrix()
 
     print()
     print("Is buffer: {}".format(isbuffer(buf)))
@@ -57,33 +74,37 @@ def main():
 
     mem = memoryview(buf)
 
-    for v in mem:
-        print(chr(v), end="")
-    print()
+    for row in range(mem.shape[0]):
+        for col in range(mem.shape[1]):
+            print(f"{mem[row,col]:4.2f}", end=" ")
+        print()
     print(buf.vector)
     print()
 
-    mem[0] = ord("X")
-    mem[5] = ord("Z")
-    for v in mem:
-        print(chr(v), end="")
-    print()
+    mem[0,0] = 11.11
+    mem[1,3] = 22.22
+    for row in range(mem.shape[0]):
+        for col in range(mem.shape[1]):
+            print(f"{mem[row,col]:4.2f}", end=" ")
+        print()
     print(buf.vector)
     print()
 
     mem = memoryview(buf)
 
-    for v in mem:
-        print(chr(v), end="")
-    print()
+    for row in range(mem.shape[0]):
+        for col in range(mem.shape[1]):
+            print(f"{mem[row,col]:4.2f}", end=" ")
+        print()
     print(buf.vector)
     print()
 
-    mem[0] = ord("U")
-    mem[5] = ord("V")
-    for v in mem:
-        print(chr(v), end="")
-    print()
+    mem[0,0] = 33.33
+    mem[1,3] = 44.44
+    for row in range(mem.shape[0]):
+        for col in range(mem.shape[1]):
+            print(f"{mem[row,col]:4.2f}", end=" ")
+        print()
     print(buf.vector)
     print()
 
