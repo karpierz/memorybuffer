@@ -12,12 +12,14 @@ Overview
 
 `PyPI record`_.
 
+`Documentation`_.
+
 Installation
 ============
 
 Prerequisites:
 
-+ Python 3.6 or higher
++ Python 3.7 or higher
 
   * https://www.python.org/
   * 3.7 is a primary test environment.
@@ -67,7 +69,7 @@ or on development mode:
 License
 =======
 
-  | Copyright (c) 2012-2020 Adam Karpierz
+  | Copyright (c) 2012-2022 Adam Karpierz
   | Licensed under the zlib/libpng License
   | https://opensource.org/licenses/Zlib
   | Please refer to the accompanying LICENSE file.
@@ -80,6 +82,7 @@ Authors
 .. |package| replace:: memorybuffer
 .. |package_bold| replace:: **memorybuffer**
 .. |respository| replace:: https://github.com/karpierz/memorybuffer.git
-.. _development page: https://github.com/karpierz/memorybuffer/
+.. _development page: https://github.com/karpierz/memorybuffer
 .. _PyPI record: https://pypi.org/project/memorybuffer/
+.. _Documentation: https://memorybuffer.readthedocs.io/
 .. _Python Buffer Protocol: https://docs.python.org/3/c-api/buffer.html

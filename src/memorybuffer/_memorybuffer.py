@@ -1,24 +1,22 @@
-# Copyright (c) 2012-2020 Adam Karpierz
+# Copyright (c) 2012-2022 Adam Karpierz
 # Licensed under the zlib/libpng License
 # https://opensource.org/licenses/Zlib
 
-__all__ = ('Py_buffer','Buffer','isbuffer')
+__all__ = ('Py_buffer', 'Buffer', 'isbuffer')
 
-from ctypes import (c_bool, c_ubyte, c_int, c_ulong, c_ssize_t, c_void_p,
-                    c_char_p, py_object, POINTER, pointer, byref, sizeof,
-                    cast, memset, Structure)
+from ctypes import (c_bool, c_ubyte, c_int, c_ssize_t, c_void_p, c_char_p,
+                    py_object, POINTER, pointer, cast, Structure)
 from ctypes import CFUNCTYPE as CFUNC
-from ctypes import pythonapi
 from ._typeobject import PyTypeObject
 
-#----------------------------------------------------------------------------#
+# -------------------------------------------------------------------------- #
 #                               Buffer Object                                #
-#----------------------------------------------------------------------------#
+# -------------------------------------------------------------------------- #
 
 class Py_buffer(Structure):
     """Python level Py_buffer struct analog."""
 
-    # equivalent of: Python-(3.X.X)/Include/object.h/Py_buffer
+    # equivalent of: Python-(3.7.0+)/Include/object.h/Py_buffer
 
     # Maximum number of dimensions
     PyBUF_MAX_NDIM = 64
@@ -55,7 +53,8 @@ class Py_buffer(Structure):
         ("buf",        c_void_p),
         ("obj",        py_object),  # owned reference
         ("len",        c_ssize_t),
-        ("itemsize",   c_ssize_t),
+        ("itemsize",   c_ssize_t),  # This is Py_ssize_t so it can be
+                                    # pointed to by strides in simple case.
         ("readonly",   c_int),
         ("ndim",       c_int),
         ("format",     c_char_p),
@@ -65,9 +64,9 @@ class Py_buffer(Structure):
         ("internal",   c_void_p)]
     _fields_ = tuple(_fields_)
 
-#----------------------------------------------------------------------------#
+# -------------------------------------------------------------------------- #
 #                               Buffer Mixin                                 #
-#----------------------------------------------------------------------------#
+# -------------------------------------------------------------------------- #
 
 class Buffer:
     """Python level buffer protocol exporter."""
@@ -76,11 +75,17 @@ class Buffer:
 
     @classmethod
     def __from_buffer__(cls, obj, length):
+        """Shares the part of the buffer of the given Python object.
+
+        Returns an instance of ctypes.c_void_p that shares the 'length' part
+        of the buffer of the given Python object 'obj', which must support the
+        buffer interface.
+        """
         return cast((c_ubyte * length).from_buffer(obj), c_void_p)
 
 class _PyBufferProcs(Structure):
 
-    # equivalent of: Python-(3.X.X)/Include/object.h/PyBufferProcs
+    # equivalent of: Python-(3.7.0+)/Include/object.h/PyBufferProcs
 
     getbufferproc     = CFUNC(c_int, py_object, POINTER(Py_buffer), c_int)
     releasebufferproc = CFUNC(None,  py_object, POINTER(Py_buffer))
@@ -128,24 +133,26 @@ def _bf_releasebuffer(self, view_p):
     except Exception:
         pass
 
+
 _buffer_procs = _PyBufferProcs(bf_getbuffer=_bf_getbuffer,
                                bf_releasebuffer=_bf_releasebuffer)
 BufferTypeObject = PyTypeObject.from_address(id(Buffer))
 BufferTypeObject.tp_as_buffer = cast(pointer(_buffer_procs), c_void_p)
-BufferTypeObject.tp_flags |= (PyTypeObject.Py_TPFLAGS_DEFAULT |
-                              PyTypeObject.Py_TPFLAGS_BASETYPE)
+BufferTypeObject.tp_flags |= (PyTypeObject.Py_TPFLAGS_DEFAULT
+                              | PyTypeObject.Py_TPFLAGS_BASETYPE)
 del BufferTypeObject
 
-#----------------------------------------------------------------------------#
+# -------------------------------------------------------------------------- #
 #                                Check Buffer                                #
-#----------------------------------------------------------------------------#
+# -------------------------------------------------------------------------- #
 
 try:
+    from ctypes import pythonapi
     isbuffer = pythonapi.PyObject_CheckBuffer
     isbuffer.argtypes = [py_object]
     isbuffer.restype  = c_bool
-except AttributeError:
-    CFUNC(c_bool, py_object)
+except (ImportError, AttributeError):
+    @CFUNC(c_bool, py_object)
     def isbuffer(obj):
         # from 3.5.1
         TypeObj = PyTypeObject.from_address(id(type(obj)))

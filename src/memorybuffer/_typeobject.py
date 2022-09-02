@@ -1,19 +1,27 @@
-# Copyright (c) 2012-2020 Adam Karpierz
+# Copyright (c) 2012-2022 Adam Karpierz
 # Licensed under the zlib/libpng License
 # https://opensource.org/licenses/Zlib
 
 __all__ = ('PyTypeObject',)
 
-from ctypes import (c_uint, c_ulong, c_ssize_t, c_char_p, c_void_p, py_object,
-                    POINTER, Structure, Union)
+import sys
+from ctypes import (c_uint, c_ulong, c_ssize_t, c_char_p, c_void_p,
+                    py_object, Structure)
+py_version = sys.version_info[:2]
+
+def defined(varname, __getframe=sys._getframe):
+    frame = __getframe(1)
+    return varname in frame.f_locals or varname in frame.f_globals
+
+# COUNT_ALLOCS = True
 
 
 class PyTypeObject(Structure):
     """Python level PyTypeObject struct analog."""
 
-    # equivalent of: Python-(3.6.0+)/Include/object.h/PyTypeObject
-
-    # `Type flags (tp_flags)
+    # equivalent of: Python-(3.7.0+)/Include/object.h/PyTypeObject
+    #                Python-(3.8.0+)/Include/cpython/object.h/PyTypeObject
+    # Type flags (tp_flags)
     #
     # These flags are used to extend the type structure in a backwards-compatible
     # fashion. Extensions can use the flags to indicate (and test) when a given
@@ -50,7 +58,7 @@ class PyTypeObject(Structure):
     Py_TPFLAGS_HAVE_GC = (0x1 << 14)
 
     # These two bits are preserved for Stackless Python, next after this is 17
-    Py_TPFLAGS_HAVE_STACKLESS_EXTENSION = 0x0 #ifndef STACKLESS else (0x3 << 15)
+    Py_TPFLAGS_HAVE_STACKLESS_EXTENSION = 0x0  # ifndef STACKLESS else (0x3 << 15)
 
     # Objects support type attribute cache
     Py_TPFLAGS_HAVE_VERSION_TAG  = (0x1 << 18)
@@ -69,9 +77,8 @@ class PyTypeObject(Structure):
     Py_TPFLAGS_BASE_EXC_SUBCLASS = (0x1 << 30)
     Py_TPFLAGS_TYPE_SUBCLASS     = (0x1 << 31)
 
-    Py_TPFLAGS_DEFAULT = (Py_TPFLAGS_HAVE_STACKLESS_EXTENSION |
-                          Py_TPFLAGS_HAVE_VERSION_TAG |
-                          0x0)
+    Py_TPFLAGS_DEFAULT = (Py_TPFLAGS_HAVE_STACKLESS_EXTENSION
+                          | Py_TPFLAGS_HAVE_VERSION_TAG)
 
     # NOTE: The following flags reuse lower bits (removed as part of the
     # Python 3.0 transition).
@@ -80,78 +87,91 @@ class PyTypeObject(Structure):
     Py_TPFLAGS_HAVE_FINALIZE = (0x1 << 0)
 
     __slots__ = ()
-    _fields_ = [# PyObject_VAR_HEAD
+    _fields_ = [  # PyObject_VAR_HEAD
         ("ob_refcnt",         c_ssize_t),
         ("ob_type",           c_void_p),
         ("ob_size",           c_ssize_t),
         # PyTypeObject body
-        ("tp_name",           c_char_p),  # For printing, in format "<module>.<name>"
-        ("tp_basicsize",      c_ssize_t), # For allocation
-        ("tp_itemsize",       c_ssize_t), # For allocation
+        ("tp_name",           c_char_p),   # For printing, in format "<module>.<name>"
+        ("tp_basicsize",      c_ssize_t),  # For allocation
+        ("tp_itemsize",       c_ssize_t),  # For allocation
         # Methods to implement standard operations
-        ("tp_dealloc",        c_void_p),  # destructor
-        ("tp_print",          c_void_p),  # printfunc
-        ("tp_getattr",        c_void_p),  # getattrfunc
-        ("tp_setattr",        c_void_p),  # setattrfunc
-        ("tp_reserved",       c_void_p),  # void*
-        ("tp_repr",           c_void_p),  # reprfunc
+        ("tp_dealloc",        c_void_p)]   # destructor
+    if py_version <= (3, 7):
+        _fields_.extend([
+        ("tp_print",          c_void_p)])  # printfunc
+    else:
+        _fields_.extend([
+        ("tp_vectorcall_offset", c_ssize_t)])
+    _fields_.extend([
+        ("tp_getattr",        c_void_p),   # getattrfunc
+        ("tp_setattr",        c_void_p),   # setattrfunc
+        ("tp_reserved",       c_void_p),   # void*
+        ("tp_repr",           c_void_p),   # reprfunc
         # Method suites for standard classes
-        ("tp_as_number",      c_void_p),  # PyNumberMethods*
-        ("tp_as_sequence",    c_void_p),  # PySequenceMethods*
-        ("tp_as_mapping",     c_void_p),  # PyMappingMethods*
+        ("tp_as_number",      c_void_p),   # PyNumberMethods*
+        ("tp_as_sequence",    c_void_p),   # PySequenceMethods*
+        ("tp_as_mapping",     c_void_p),   # PyMappingMethods*
         # More standard operations (here for binary compatibility)
-        ("tp_hash",           c_void_p),  # hashfunc
-        ("tp_call",           c_void_p),  # ternaryfunc
-        ("tp_str",            c_void_p),  # reprfunc
-        ("tp_getattro",       c_void_p),  # getattrofunc
-        ("tp_setattro",       c_void_p),  # setattrofunc
+        ("tp_hash",           c_void_p),   # hashfunc
+        ("tp_call",           c_void_p),   # ternaryfunc
+        ("tp_str",            c_void_p),   # reprfunc
+        ("tp_getattro",       c_void_p),   # getattrofunc
+        ("tp_setattro",       c_void_p),   # setattrofunc
         # Functions to access object as input/output buffer
-        ("tp_as_buffer",      c_void_p),  # PyBufferProcs*
+        ("tp_as_buffer",      c_void_p),   # PyBufferProcs*
         # Flags to define presence of optional/expanded features
         ("tp_flags",          c_ulong),
-        ("tp_doc",            c_char_p),  # Documentation string
+        ("tp_doc",            c_char_p),   # Documentation string
         # Assigned meaning in release 2.0
         # call function for all accessible objects
-        ("tp_traverse",       c_void_p),  # traverseproc
+        ("tp_traverse",       c_void_p),   # traverseproc
         # delete references to contained objects
-        ("tp_clear",          c_void_p),  # inquiry
+        ("tp_clear",          c_void_p),   # inquiry
         # Assigned meaning in release 2.1
         # rich comparisons
-        ("tp_richcompare",    c_void_p),  # richcmpfunc
+        ("tp_richcompare",    c_void_p),   # richcmpfunc
         # weak reference enabler
         ("tp_weaklistoffset", c_ssize_t),
         # Iterators
-        ("tp_iter",           c_void_p),  # getiterfunc
-        ("tp_iternext",       c_void_p),  # iternextfunc
+        ("tp_iter",           c_void_p),   # getiterfunc
+        ("tp_iternext",       c_void_p),   # iternextfunc
         # Attribute descriptor and subclassing stuff
-        ("tp_methods",        c_void_p),  # struct PyMethodDef*
-        ("tp_members",        c_void_p),  # struct PyMemberDef*
-        ("tp_getset",         c_void_p),  # struct PyGetSetDef*
-        ("tp_base",           c_void_p),  # struct PyTypeObject*
+        ("tp_methods",        c_void_p),   # PyMethodDef*
+        ("tp_members",        c_void_p),   # PyMemberDef*
+        ("tp_getset",         c_void_p),   # PyGetSetDef*
+        ("tp_base",           c_void_p),   # PyTypeObject*
         ("tp_dict",           py_object),
-        ("tp_descr_get",      c_void_p),  # descrgetfunc
-        ("tp_descr_set",      c_void_p),  # descrsetfunc
+        ("tp_descr_get",      c_void_p),   # descrgetfunc
+        ("tp_descr_set",      c_void_p),   # descrsetfunc
         ("tp_dictoffset",     c_ssize_t),
-        ("tp_init",           c_void_p),  # initproc
-        ("tp_alloc",          c_void_p),  # allocfunc
-        ("tp_new",            c_void_p),  # newfunc
-        ("tp_free",           c_void_p),  # freefunc # Low-level free-memory routine
-        ("tp_is_gc",          c_void_p),  # inquiry  # For PyObject_IS_GC
+        ("tp_init",           c_void_p),   # initproc
+        ("tp_alloc",          c_void_p),   # allocfunc
+        ("tp_new",            c_void_p),   # newfunc
+        ("tp_free",           c_void_p),   # freefunc # Low-level free-memory routine
+        ("tp_is_gc",          c_void_p),   # inquiry  # For PyObject_IS_GC
         ("tp_bases",          py_object),
-        ("tp_mro",            py_object), # method resolution order
+        ("tp_mro",            py_object),  # method resolution order
         ("tp_cache",          py_object),
         ("tp_subclasses",     py_object),
         ("tp_weaklist",       py_object),
-        ("tp_del",            c_void_p),  # destructor
+        ("tp_del",            c_void_p),   # destructor
         # Type attribute cache version tag.
         ("tp_version_tag",    c_uint),
-        ("tp_finalize",       c_void_p)]  # destructor
-    if False: #ifdef COUNT_ALLOCS
+        ("tp_finalize",       c_void_p)])  # destructor
+    if py_version >= (3, 8):
+        _fields_.extend([
+        ("tp_vectorcall",     c_void_p)])  # printfunc # !!! vectorcallfunc !!!
+    if py_version == (3, 8):
+        # bpo-37250: kept for backwards compatibility in CPython 3.8 only
+        _fields_.extend([
+        ("tp_print",          c_void_p)])
+    if py_version <= (3, 8) and defined("COUNT_ALLOCS"):
         _fields_.extend([
         # these must be last and never explicitly initialized
         ("tp_allocs",         c_ssize_t),
         ("tp_frees",          c_ssize_t),
         ("tp_maxalloc",       c_ssize_t),
-        ("tp_prev",           c_void_p),  # struct PyTypeObject*
-        ("tp_next",           c_void_p)]) # struct PyTypeObject*
+        ("tp_prev",           c_void_p),   # PyTypeObject*
+        ("tp_next",           c_void_p)])  # PyTypeObject*
     _fields_ = tuple(_fields_)
