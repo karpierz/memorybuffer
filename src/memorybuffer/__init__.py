@@ -1,7 +1,7 @@
-# Copyright (c) 2012-2022 Adam Karpierz
+# Copyright (c) 2012 Adam Karpierz
 # Licensed under the zlib/libpng License
-# https://opensource.org/licenses/Zlib
+# https://opensource.org/license/zlib
 
 from .__about__ import * ; del __about__  # noqa
 
-from ._memorybuffer import *  # noqa
+from ._memorybuffer import * ; del _memorybuffer  # noqa

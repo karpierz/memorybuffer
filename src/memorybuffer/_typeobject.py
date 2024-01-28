@@ -1,27 +1,59 @@
-# Copyright (c) 2012-2022 Adam Karpierz
+# Copyright (c) 2012 Adam Karpierz
 # Licensed under the zlib/libpng License
-# https://opensource.org/licenses/Zlib
+# https://opensource.org/license/zlib
 
 __all__ = ('PyTypeObject',)
 
-import sys
-from ctypes import (c_uint, c_ulong, c_ssize_t, c_char_p, c_void_p,
-                    py_object, Structure)
-py_version = sys.version_info[:2]
-
-def defined(varname, __getframe=sys._getframe):
-    frame = __getframe(1)
-    return varname in frame.f_locals or varname in frame.f_globals
+from ctypes import (c_long, c_ubyte, c_uint32, c_uint, c_ulong, c_ssize_t,
+                    c_char_p, c_void_p, py_object, Structure, Union, sizeof)
+from ._platform import *  # noqa
 
 # COUNT_ALLOCS = True
+
+
+class PyObject(Structure):
+    __slots__ = ()
+    _fields_ = []
+    if py_version >= (3, 12):
+        class _Ob_refcnt(Union):
+            _fields_ = [
+            ("ob_refcnt", c_ssize_t)]
+            # #if SIZEOF_VOID_P > 4
+            if sizeof(c_void_p) > 4:
+                _fields_.extend([
+            ("ob_refcnt_split", c_uint32 * 2)])
+        _anonymous_ = ("_ob_refcnt",)
+        _fields_ = [
+        ("_ob_refcnt", _Ob_refcnt),
+        ("ob_type",    py_object),
+        ]
+    else:
+        _fields_ = [
+        ("ob_refcnt", c_ssize_t),
+        ("ob_type",   py_object),
+        ]
+    _fields_ = tuple(_fields_)
+
+
+class PyVarObject(Structure):
+    __slots__ = ()
+    _fields_ = [
+        ("ob_base", PyObject),
+        ("ob_size", c_ssize_t),  # Number of items in variable part
+    ]
+    _fields_ = tuple(_fields_)
 
 
 class PyTypeObject(Structure):
     """Python level PyTypeObject struct analog."""
 
-    # equivalent of: Python-(3.7.0+)/Include/object.h/PyTypeObject
-    #                Python-(3.8.0+)/Include/cpython/object.h/PyTypeObject
+    # Equivalents of:
+    #   Python-3.[8-12].x+/Include/cpython/object.h/struct _typeobject
+    #   PyPy-3.[9-10].x+/pypy/module/cpyext/parse/cpyext_object.h/struct _typeobject
+
     # Type flags (tp_flags)
+    #   (from Python-3.[8-12].x/Include/object.h and
+    #   (from PyPy-3.[9-10].x/pypy/module/cpyext/include/object.h
     #
     # These flags are used to extend the type structure in a backwards-compatible
     # fashion. Extensions can use the flags to indicate (and test) when a given
@@ -42,6 +74,15 @@ class PyTypeObject(Structure):
     # Code can use PyType_HasFeature(type_ob, flag_value) to test whether the
     # given type object has a specified feature.
 
+    # Py_LIMITED_API = True
+
+    # Disallow creating instances of the type: set tp_new to NULL and don't create
+    # the "__new__" key in the type dictionary.
+    Py_TPFLAGS_DISALLOW_INSTANTIATION = (0x1 << 7)
+
+    # Set if the type object is immutable: type attributes cannot be set nor deleted
+    Py_TPFLAGS_IMMUTABLETYPE = (0x1 << 8)
+
     # Set if the type object is dynamically allocated
     Py_TPFLAGS_HEAPTYPE = (0x1 << 9)
 
@@ -60,12 +101,19 @@ class PyTypeObject(Structure):
     # These two bits are preserved for Stackless Python, next after this is 17
     Py_TPFLAGS_HAVE_STACKLESS_EXTENSION = 0x0  # ifndef STACKLESS else (0x3 << 15)
 
-    # Objects support type attribute cache
-    Py_TPFLAGS_HAVE_VERSION_TAG  = (0x1 << 18)
+    # Object has up-to-date type attribute cache
     Py_TPFLAGS_VALID_VERSION_TAG = (0x1 << 19)
 
     # Type is abstract and cannot be instantiated
     Py_TPFLAGS_IS_ABSTRACT = (0x1 << 20)
+
+    # This undocumented flag gives certain built-ins their unique pattern-matching
+    # behavior, which allows a single positional subpattern to match against the
+    # subject itself (rather than a mapped attribute on it):
+    # _Py_TPFLAGS_MATCH_SELF = (0x1 << 22)
+
+    # Items (ob_size*tp_itemsize) are found at the end of an instance's memory
+    Py_TPFLAGS_ITEMS_AT_END = (0x1 << 23)
 
     # These flags are used to determine if a type is a subclass.
     Py_TPFLAGS_LONG_SUBCLASS     = (0x1 << 24)
@@ -77,33 +125,43 @@ class PyTypeObject(Structure):
     Py_TPFLAGS_BASE_EXC_SUBCLASS = (0x1 << 30)
     Py_TPFLAGS_TYPE_SUBCLASS     = (0x1 << 31)
 
-    Py_TPFLAGS_DEFAULT = (Py_TPFLAGS_HAVE_STACKLESS_EXTENSION
-                          | Py_TPFLAGS_HAVE_VERSION_TAG)
+    if is_pypy and py_version == (3, 9):
+        # These are conceptually the same as the flags above, but they are
+        # PyPy-specific and are stored inside tp_pypy_flags
+        Py_TPPYPYFLAGS_FLOAT_SUBCLASS = (0x1 << 0)
 
-    # NOTE: The following flags reuse lower bits (removed as part of the
+    # NOTE:
+    # Some of the following flags reuse lower bits (removed as part of the
     # Python 3.0 transition).
 
-    # Type structure has tp_finalize member (3.4)
-    Py_TPFLAGS_HAVE_FINALIZE = (0x1 << 0)
+    # The following flags are kept for compatibility; in previous
+    # versions they indicated presence of newer tp_* fields on the
+    # type struct.
+    # Starting with 3.8, binary compatibility of C extensions across
+    # feature releases of Python is not supported anymore (except when
+    # using the stable ABI, in which all classes are created dynamically,
+    # using the interpreter's memory layout.)
+    # Note that older extensions using the stable ABI set these flags,
+    # so the bits must not be repurposed.
+    Py_TPFLAGS_HAVE_FINALIZE    = (0x1 << 0)
+    Py_TPFLAGS_HAVE_VERSION_TAG = (0x1 << 18)
+
+    # ** Default flags **
+    Py_TPFLAGS_DEFAULT = Py_TPFLAGS_HAVE_STACKLESS_EXTENSION
+    if py_version <= (3, 9):
+        Py_TPFLAGS_DEFAULT |= Py_TPFLAGS_HAVE_VERSION_TAG
 
     __slots__ = ()
-    _fields_ = [  # PyObject_VAR_HEAD
-        ("ob_refcnt",         c_ssize_t),
-        ("ob_type",           c_void_p),
-        ("ob_size",           c_ssize_t),
+    _fields_ = [
+        # PyObject_VAR_HEAD
+        ("ob_base",           PyVarObject),
         # PyTypeObject body
         ("tp_name",           c_char_p),   # For printing, in format "<module>.<name>"
         ("tp_basicsize",      c_ssize_t),  # For allocation
         ("tp_itemsize",       c_ssize_t),  # For allocation
         # Methods to implement standard operations
-        ("tp_dealloc",        c_void_p)]   # destructor
-    if py_version <= (3, 7):
-        _fields_.extend([
-        ("tp_print",          c_void_p)])  # printfunc
-    else:
-        _fields_.extend([
-        ("tp_vectorcall_offset", c_ssize_t)])
-    _fields_.extend([
+        ("tp_dealloc",        c_void_p),   # destructor
+        ("tp_vectorcall_offset", c_ssize_t),
         ("tp_getattr",        c_void_p),   # getattrfunc
         ("tp_setattr",        c_void_p),   # setattrfunc
         ("tp_reserved",       c_void_p),   # void*
@@ -140,6 +198,7 @@ class PyTypeObject(Structure):
         ("tp_methods",        c_void_p),   # PyMethodDef*
         ("tp_members",        c_void_p),   # PyMemberDef*
         ("tp_getset",         c_void_p),   # PyGetSetDef*
+        # Strong reference on a heap type, borrowed reference on a static type
         ("tp_base",           c_void_p),   # PyTypeObject*
         ("tp_dict",           py_object),
         ("tp_descr_get",      c_void_p),   # descrgetfunc
@@ -153,20 +212,22 @@ class PyTypeObject(Structure):
         ("tp_bases",          py_object),
         ("tp_mro",            py_object),  # method resolution order
         ("tp_cache",          py_object),
-        ("tp_subclasses",     py_object),
+        ("tp_subclasses",     c_void_p if py_version >= (3, 12) else py_object),
         ("tp_weaklist",       py_object),
         ("tp_del",            c_void_p),   # destructor
         # Type attribute cache version tag.
         ("tp_version_tag",    c_uint),
-        ("tp_finalize",       c_void_p)])  # destructor
-    if py_version >= (3, 8):
+        ("tp_finalize",       c_void_p),   # destructor
+        ("tp_vectorcall",     c_void_p)]   # vectorcallfunc
+    if py_version == (3, 8) or (is_pypy and py_version == (3, 9)):
         _fields_.extend([
-        ("tp_vectorcall",     c_void_p)])  # printfunc # !!! vectorcallfunc !!!
-    if py_version == (3, 8):
         # bpo-37250: kept for backwards compatibility in CPython 3.8 only
-        _fields_.extend([
         ("tp_print",          c_void_p)])
-    if py_version <= (3, 8) and defined("COUNT_ALLOCS"):
+    if py_version >= (3, 12):
+        _fields_.extend([
+         # bitset of which type-watchers care about this type
+        ("tp_watched",        c_ubyte)])   # unsigned char
+    if is_cpython and py_version <= (3, 8) and defined("COUNT_ALLOCS"):
         _fields_.extend([
         # these must be last and never explicitly initialized
         ("tp_allocs",         c_ssize_t),
@@ -174,4 +235,10 @@ class PyTypeObject(Structure):
         ("tp_maxalloc",       c_ssize_t),
         ("tp_prev",           c_void_p),   # PyTypeObject*
         ("tp_next",           c_void_p)])  # PyTypeObject*
+    if is_pypy and py_version == (3, 9):
+        # PyPy specific extra fields: make sure that they are ALWAYS at the end,
+        # for compatibility with CPython
+        _fields_.extend([
+        # PyPy extensions
+        ("tp_pypy_flags",     c_long)])
     _fields_ = tuple(_fields_)

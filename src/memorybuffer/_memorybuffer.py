@@ -1,6 +1,6 @@
-# Copyright (c) 2012-2022 Adam Karpierz
+# Copyright (c) 2012 Adam Karpierz
 # Licensed under the zlib/libpng License
-# https://opensource.org/licenses/Zlib
+# https://opensource.org/license/zlib
 
 __all__ = ('Py_buffer', 'Buffer', 'isbuffer')
 
@@ -8,6 +8,7 @@ from ctypes import (c_bool, c_ubyte, c_int, c_ssize_t, c_void_p, c_char_p,
                     py_object, POINTER, pointer, cast, Structure)
 from ctypes import CFUNCTYPE as CFUNC
 from ._typeobject import PyTypeObject
+from ._platform import *  # noqa
 
 # -------------------------------------------------------------------------- #
 #                               Buffer Object                                #
@@ -16,12 +17,16 @@ from ._typeobject import PyTypeObject
 class Py_buffer(Structure):
     """Python level Py_buffer struct analog."""
 
-    # equivalent of: Python-(3.7.0+)/Include/object.h/Py_buffer
+    # Equivalent of:
+    #   Python-3.[ 8-10].x/Include/cpython/object.h/Py_buffer
+    #   Python-3.[11-12].x/Include/pybuffer.h/Py_buffer
 
     # Maximum number of dimensions
-    PyBUF_MAX_NDIM = 64
+    PyBUF_MAX_NDIM = 64 if is_cpython else 36 if is_pypy else 64
+    if is_pypy:
+        Py_MAX_NDIMS = PyBUF_MAX_NDIM
 
-    # Flags for getting buffers
+    # Flags for getting buffers. Keep these in sync with inspect.BufferFlags.
     PyBUF_SIMPLE         = 0x0000
     PyBUF_WRITABLE       = 0x0001
     PyBUF_WRITEABLE      = PyBUF_WRITABLE  # backwards compatible alias
@@ -47,6 +52,8 @@ class Py_buffer(Structure):
 
     PyBUF_READ  = 0x0100
     PyBUF_WRITE = 0x0200
+    if is_pypy:
+        PyBUF_SHADOW = 0x400
 
     __slots__ = ()
     _fields_  = [
@@ -62,6 +69,15 @@ class Py_buffer(Structure):
         ("strides",    POINTER(c_ssize_t)),
         ("suboffsets", POINTER(c_ssize_t)),
         ("internal",   c_void_p)]
+    if is_pypy:
+        _fields_.extend([
+        # PyPy extensions
+        ("flags",      c_int),
+        ("_strides",   c_ssize_t * Py_MAX_NDIMS),
+        ("_shape",     c_ssize_t * Py_MAX_NDIMS)])
+        # static store for shape and strides of
+        # mono-dimensional buffers.
+        # ("smalltable", c_ssize_t * 2)])
     _fields_ = tuple(_fields_)
 
 # -------------------------------------------------------------------------- #
@@ -70,8 +86,6 @@ class Py_buffer(Structure):
 
 class Buffer:
     """Python level buffer protocol exporter."""
-
-    __slots__ = ('__buffer_exports__',)
 
     @classmethod
     def __from_buffer__(cls, obj, length):
@@ -136,7 +150,7 @@ def _bf_releasebuffer(self, view_p):
 
 _buffer_procs = _PyBufferProcs(bf_getbuffer=_bf_getbuffer,
                                bf_releasebuffer=_bf_releasebuffer)
-BufferTypeObject = PyTypeObject.from_address(id(Buffer))
+BufferTypeObject = PyTypeObject.from_address(address(Buffer))
 BufferTypeObject.tp_as_buffer = cast(pointer(_buffer_procs), c_void_p)
 BufferTypeObject.tp_flags |= (PyTypeObject.Py_TPFLAGS_DEFAULT
                               | PyTypeObject.Py_TPFLAGS_BASETYPE)
@@ -146,15 +160,15 @@ del BufferTypeObject
 #                                Check Buffer                                #
 # -------------------------------------------------------------------------- #
 
-try:
+if is_cpython and py_version >= (3, 9):
     from ctypes import pythonapi
     isbuffer = pythonapi.PyObject_CheckBuffer
     isbuffer.argtypes = [py_object]
     isbuffer.restype  = c_bool
-except (ImportError, AttributeError):
+else:
     @CFUNC(c_bool, py_object)
     def isbuffer(obj):
-        # from 3.5.1
-        TypeObj = PyTypeObject.from_address(id(type(obj)))
+        # from 3.9+: Objects/abstract.c/PyObject_CheckBuffer
+        TypeObj = PyTypeObject.from_address(address(type(obj)))
         tp_as_buffer = cast(TypeObj.tp_as_buffer, POINTER(_PyBufferProcs))
         return bool(tp_as_buffer) and bool(tp_as_buffer.contents.bf_getbuffer)

@@ -1,6 +1,6 @@
-# Copyright (c) 2012-2022 Adam Karpierz
+# Copyright (c) 2012 Adam Karpierz
 # Licensed under the zlib/libpng License
-# https://opensource.org/licenses/Zlib
+# https://opensource.org/license/zlib
 
 import unittest
 import array
@@ -87,7 +87,7 @@ class MemoryBufferTestCase(unittest.TestCase):
             (BytesBuffer,       b"ABCDEFGHIJ",   b"XBCDEZGHIJ"),
             (CtypesCcharBuffer, b"ABCDEFGHIJ",   b"XBCDEZGHIJ"),
             (CtypesCstrBuffer,  b"ABCDEFGHIJ\0", b"XBCDEZGHIJ\0"),
-            (BytearrayBuffer,   b"ABCDEFGHIJ",   b"XBCDEZGHIJ"), 
+            (BytearrayBuffer,   b"ABCDEFGHIJ",   b"XBCDEZGHIJ"),
             (ArrayByteBuffer,   b"ABCDEFGHIJ",   b"XBCDEZGHIJ"),
             (CtypesByteBuffer,  b"ABCDEFGHIJ",   b"XBCDEZGHIJ"),
             ):
