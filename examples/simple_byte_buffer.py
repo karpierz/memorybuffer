@@ -1,6 +1,5 @@
 # Copyright (c) 2012 Adam Karpierz
-# Licensed under the zlib/libpng License
-# https://opensource.org/license/zlib
+# SPDX-License-Identifier: Zlib
 
 import ctypes as ct
 from memorybuffer import Buffer, isbuffer, Py_buffer

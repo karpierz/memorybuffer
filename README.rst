@@ -19,7 +19,7 @@ Installation
 
 Prerequisites:
 
-+ Python 3.8 or higher
++ Python 3.9 or higher
 
   * https://www.python.org/
 
@@ -68,7 +68,7 @@ or on development mode:
 License
 =======
 
-  | Copyright (c) 2012-2024 Adam Karpierz
+  | |copyright|
   | Licensed under the zlib/libpng License
   | https://opensource.org/license/zlib
   | Please refer to the accompanying LICENSE file.
@@ -80,6 +80,7 @@ Authors
 
 .. |package| replace:: memorybuffer
 .. |package_bold| replace:: **memorybuffer**
+.. |copyright| replace:: Copyright (c) 2012-2024 Adam Karpierz
 .. |respository| replace:: https://github.com/karpierz/memorybuffer.git
 .. _Development page: https://github.com/karpierz/memorybuffer
 .. _PyPI record: https://pypi.org/project/memorybuffer/

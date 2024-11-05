@@ -1,12 +1,11 @@
 # Copyright (c) 2012 Adam Karpierz
-# Licensed under the zlib/libpng License
-# https://opensource.org/license/zlib
+# SPDX-License-Identifier: Zlib
 
 __all__ = ('PyTypeObject',)
 
 from ctypes import (c_long, c_ubyte, c_uint32, c_uint, c_ulong, c_ssize_t,
                     c_char_p, c_void_p, py_object, Structure, Union, sizeof)
-from ._platform import *  # noqa
+from ._platform import py_version, is_cpython, is_pypy
 
 # COUNT_ALLOCS = True
 
@@ -219,22 +218,14 @@ class PyTypeObject(Structure):
         ("tp_version_tag",    c_uint),
         ("tp_finalize",       c_void_p),   # destructor
         ("tp_vectorcall",     c_void_p)]   # vectorcallfunc
-    if py_version == (3, 8) or (is_pypy and py_version == (3, 9)):
+    if is_pypy and py_version == (3, 9):
         _fields_.extend([
         # bpo-37250: kept for backwards compatibility in CPython 3.8 only
         ("tp_print",          c_void_p)])
     if py_version >= (3, 12):
         _fields_.extend([
-         # bitset of which type-watchers care about this type
+        # bitset of which type-watchers care about this type
         ("tp_watched",        c_ubyte)])   # unsigned char
-    if is_cpython and py_version <= (3, 8) and defined("COUNT_ALLOCS"):
-        _fields_.extend([
-        # these must be last and never explicitly initialized
-        ("tp_allocs",         c_ssize_t),
-        ("tp_frees",          c_ssize_t),
-        ("tp_maxalloc",       c_ssize_t),
-        ("tp_prev",           c_void_p),   # PyTypeObject*
-        ("tp_next",           c_void_p)])  # PyTypeObject*
     if is_pypy and py_version == (3, 9):
         # PyPy specific extra fields: make sure that they are ALWAYS at the end,
         # for compatibility with CPython

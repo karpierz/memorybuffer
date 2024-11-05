@@ -1,6 +1,5 @@
 # Copyright (c) 2012 Adam Karpierz
-# Licensed under the zlib/libpng License
-# https://opensource.org/license/zlib
+# SPDX-License-Identifier: Zlib
 
 __all__ = ('Py_buffer', 'Buffer', 'isbuffer')
 
@@ -8,7 +7,7 @@ from ctypes import (c_bool, c_ubyte, c_int, c_ssize_t, c_void_p, c_char_p,
                     py_object, POINTER, pointer, cast, Structure)
 from ctypes import CFUNCTYPE as CFUNC
 from ._typeobject import PyTypeObject
-from ._platform import *  # noqa
+from ._platform import py_version, is_cpython, is_pypy, address
 
 # -------------------------------------------------------------------------- #
 #                               Buffer Object                                #
@@ -160,7 +159,7 @@ del BufferTypeObject
 #                                Check Buffer                                #
 # -------------------------------------------------------------------------- #
 
-if is_cpython and py_version >= (3, 9):
+if is_cpython:
     from ctypes import pythonapi
     isbuffer = pythonapi.PyObject_CheckBuffer
     isbuffer.argtypes = [py_object]
